@@ -1,0 +1,21 @@
+# 运行时/构建产物
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 凭证与本地配置（一律不入仓，通过 FITNESS_* 环境变量注入）
+.env
+*.env
+.env.*
+*.pem
+*.key
+secrets*
+
+# 本地备份与临时文件
+*.bak
+*.bak-*
+*.orig
+*.log
+.DS_Store

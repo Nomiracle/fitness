@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0f1419">
+<title>增肌记录 · 175cm/70kg 3练计划</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1419;--card:#1a2230;--card2:#222d42;--acc:#ffb300;--acc2:#29d3a5;--txt:#eef2f7;--mut:#93a1b5;--line:#2c3a52;--danger:#ff5d5d}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:560px;margin:0 auto;min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:#131a26;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+header b{font-size:16px}header b span{color:var(--acc)}
+header small{color:var(--mut);display:block;font-size:11px;font-weight:normal}
+#userBox{font-size:12px;color:var(--mut);text-align:right}
+#userBox button{background:none;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:4px 10px;font-size:12px}
+main{padding:12px 12px 90px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:14px;margin-bottom:10px}.card h3 em{font-style:normal;color:var(--acc)}
+.mut{color:var(--mut);font-size:12px}.row{display:flex;gap:8px}.grow{flex:1}
+input,select,textarea{width:100%;background:#0e1420;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font-size:14px;margin:4px 0}
+button.btn{background:var(--acc);border:none;color:#1a1200;font-weight:700;border-radius:10px;padding:11px;font-size:14px;width:100%;margin-top:8px}
+button.btn2{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px;font-size:13px;width:100%;margin-top:6px}
+button.sm{width:auto;padding:6px 12px;font-size:12px;margin:2px}
+.bar{height:8px;background:#0e1420;border-radius:99px;overflow:hidden;margin:4px 0 8px}
+.bar i{display:block;height:100%;background:var(--acc2);border-radius:99px}
+.bar.over i{background:var(--danger)}
+.kpi{display:flex;gap:8px;text-align:center}.kpi div{flex:1;background:#0e1420;border-radius:10px;padding:8px 4px;font-size:12px}.kpi b{display:block;font-size:16px;color:var(--acc)}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;background:#131a26;border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;border:none;color:var(--mut);font-size:11px;padding:8px 2px;border-radius:10px}
+nav button.on{color:var(--acc);background:#1f2940}
+nav button i{display:block;font-size:18px;font-style:normal}
+table{width:100%;font-size:12px;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
+.setRow{display:flex;gap:6px;align-items:center;margin:4px 0}.setRow input{text-align:center}
+.chip{display:inline-block;background:#0e1420;border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12px;margin:2px}
+.chip.todo:not(.on){border-color:var(--acc);color:var(--acc)}
+.chip.done{opacity:.45;text-decoration:line-through}
+.chip.on{background:var(--acc);color:#1a1200;border-color:var(--acc);font-weight:700}
+.chip.done.on{opacity:1}
+#authWrap{padding:40px 20px;max-width:400px;margin:0 auto}
+#boot{padding:40px 20px;max-width:400px;margin:0 auto}
+.skel{height:14px;background:#1a2230;border-radius:8px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+.log{font-size:12px;background:#0e1420;border-radius:10px;padding:8px 10px;margin:6px 0;border-left:3px solid var(--acc2)}
+.log b{color:var(--acc)}.del{color:var(--danger);float:right;background:none;border:none;font-size:12px;margin-left:8px}
+.log input[type=time]{padding:6px;font-size:13px}
+canvas{width:100%;height:160px;background:#0e1420;border-radius:10px}
+.planTbl td,.planTbl th{font-size:12px}
+.tip{background:#14231f;border:1px solid #1f4d3f;border-radius:10px;padding:10px;font-size:12px;margin:8px 0;line-height:1.7}
+button:disabled{opacity:.45}
+input.bad{border-color:var(--danger)!important}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(68px + env(safe-area-inset-top));width:calc(100% - 24px);max-width:536px;background:#1f2940;border:1px solid var(--line);border-left:4px solid var(--acc2);border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:9;box-shadow:0 8px 24px #0009}
+.toast.err{border-left-color:var(--danger)}
+.toast button{background:var(--acc);border:none;color:#1a1200;font-weight:700;border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+<div><b>💪 增肌记录 <span>· BULK</span></b><small>175cm · 70kg · 目标 +0.25~0.5kg/周 · 3000kcal</small></div>
+<div id="userBox"></div>
+</header>
+
+<!-- 启动态: 恢复会话期间不显示登录表单 -->
+<div id="boot">
+<div class="card" style="background:none;border:none;text-align:center;padding-top:50px">
+<b style="font-size:22px;color:var(--acc)">💪 增肌记录 · BULK</b>
+<p class="mut" id="bootMsg" style="margin-top:12px">正在恢复会话…</p>
+<div class="skel" style="width:70%;margin:18px auto"></div>
+<div class="skel" style="width:45%;margin:10px auto"></div>
+</div>
+</div>
+
+<!-- 登录/注册 -->
+<div id="authWrap" class="hidden">
+<div class="card"><h3>🏋️ <em>登录 / 注册</em></h3>
+<p class="mut">数据存在本机浏览器（localStorage），单人本机工具，无需服务器。换设备用导出/导入备份。</p>
+<input id="u" placeholder="用户名" autocomplete="username">
+<input id="p" type="password" placeholder="密码" autocomplete="current-password">
+<button class="btn" onclick="login()">登录</button>
+<button class="btn2" onclick="register()">没有账号？一键注册</button>
+<p class="mut" id="authMsg" style="margin-top:8px"></p>
+</div>
+</div>
+
+<main id="app" class="hidden">
+<!-- 今日 -->
+<section id="tab-today">
+<div class="card"><h3>📅 <em>今日概览</em> <span class="mut" id="todayDate"></span></h3>
+<p class="mut" id="trainHint"></p>
+<div class="kpi" style="margin-top:8px">
+<div>热量<b id="kKcal">0/3000</b><span class="mut">kcal</span></div>
+<div>蛋白<b id="kP">0/150g</b><span class="mut">目标140-155</span></div>
+<div>碳水<b id="kC">0/365g</b><span class="mut">目标350-400</span></div>
+<div>脂肪<b id="kF">0/75g</b><span class="mut">目标70-80</span></div>
+</div>
+<div style="margin-top:10px"><div class="mut">热量进度</div><div class="bar" id="barKcal"><i style="width:0%"></i></div>
+<div class="mut">蛋白质进度</div><div class="bar" id="barP"><i style="width:0%"></i></div></div>
+<p class="mut" id="todayWorkout"></p>
+</div>
+<div class="card"><h3>⚡ <em>快捷记录</em></h3>
+<div class="row"><button class="btn2 grow" onclick="quickWorkout()">+ 记录今日训练</button><button class="btn2 grow" onclick="quickWeight()">+ 记录今日体重</button></div>
+<button class="btn2" onclick="go('food')">+ 记录饮食 → 去饮食页</button>
+</div>
+<div class="card"><h3>📊 <em>本周体重评估</em></h3><p class="mut" id="assess"></p></div>
+</section>
+
+<!-- 训练 -->
+<section id="tab-train" class="hidden">
+<div class="card"><h3>🏋️ <em>记录训练</em>（周一/三/六 · 5动作×3组）</h3>
+<div class="row"><div class="grow">日期<input id="wDate" type="date"></div></div>
+<div class="card" style="background:#0e1420;margin:8px 0">
+<div><b id="tmMain" style="font-size:19px;color:var(--acc)">未计时</b><div class="mut" id="tmSub">点「开始本动作」记录开始时间</div></div>
+<div class="row" style="margin-top:8px"><button class="btn2 grow" id="tmB1" onclick="atBtn()">▶ 开始本动作</button></div>
+</div>
+<div id="exChips" style="margin:8px 0"></div>
+<p class="mut" style="margin:0 0 8px">重量统一记总重量：杠铃=杆+两边，哑铃=两只合计，器械=插片数字。</p>
+<div class="card" style="background:#0e1420;margin:0 0 8px"><b id="exName" style="font-size:14px"></b><p class="mut" id="exTip"></p><div id="setRows"></div>
+<button class="btn2" onclick="addSet()">+ 加一组</button></div>
+<button class="btn" id="saveNextBtn" onclick="saveWorkout(true)">保存并下一个动作 ▸</button>
+<button class="btn2" id="saveBtn" onclick="saveWorkout(false)">只保存当前动作</button>
+<p class="mut hidden" id="setHint" style="margin-top:6px;color:var(--danger)">至少填一组重量/次数</p>
+</div>
+<div class="card"><h3>📜 <em>训练历史</em></h3><div id="wList"></div></div>
+</section>
+
+<!-- 饮食 -->
+<section id="tab-food" class="hidden">
+<div class="card"><h3>🍱 <em>记录饮食</em></h3>
+<div class="row"><div class="grow">日期<input id="fDate" type="date"></div><div class="grow">餐次<select id="fMeal"><option>早餐</option><option>午餐</option><option>训练后加餐</option><option>晚餐</option><option>加餐</option></select></div></div>
+<div id="foodChips" style="margin:8px 0"></div>
+<div class="row"><div class="grow">食物<input id="fName" placeholder="例：鸡胸肉200g"></div></div>
+<div class="row"><div class="grow">热量<input id="fKcal" type="number" placeholder="kcal"></div><div class="grow">蛋白g<input id="fP" type="number"></div><div class="grow">碳水g<input id="fC" type="number"></div><div class="grow">脂肪g<input id="fF" type="number"></div></div>
+<button class="btn" onclick="saveFood()">保存饮食</button>
+<p class="mut">点预设餐可一键填入营养，再按保存。</p>
+</div>
+<div class="card"><h3>📜 <em>饮食历史</em></h3><div id="fList"></div>
+<div class="row" style="margin-top:8px"><button class="btn2 grow sm" onclick="exportData()">导出备份</button><button class="btn2 grow sm" onclick="document.getElementById('imp').click()">导入备份</button><input type="file" id="imp" class="hidden" accept=".json" onchange="importData(this)"></div>
+</div>
+</section>
+
+<!-- 体重 -->
+<section id="tab-weight" class="hidden">
+<div class="card"><h3>⚖️ <em>体重 / 围度</em></h3>
+<div class="row"><div class="grow">日期<input id="bwDate" type="date"></div><div class="grow">体重kg<input id="bwKg" type="number" step="0.1" placeholder="70.0"></div></div>
+<input id="bwNote" placeholder="备注：胸围/臂围/腰围/拍照 ✓（可选）">
+<button class="btn" onclick="saveWeight()">保存体重</button>
+<p class="mut">目标 +0.25~0.5kg/周；涨太慢午/晚主食各+50g，涨太快各−50g。每2-4周拍照+量围度。</p>
+</div>
+<div class="card"><h3>📈 <em>体重曲线</em></h3><canvas id="chart" width="500" height="160"></canvas><div id="bwList" style="margin-top:8px"></div></div>
+</section>
+
+<!-- 计划 -->
+<section id="tab-plan" class="hidden">
+<div class="card"><h3>🗓️ <em>每周训练</em> · 一三六全身</h3>
+<table class="planTbl"><tr><th>星期</th><th>内容</th><th>时间</th></tr>
+<tr><td>一</td><td>5基础动作×3组</td><td>约60分钟(自动记录)</td></tr>
+<tr><td>二</td><td>休息</td><td>-</td></tr>
+<tr><td>三</td><td>同周一</td><td>约60分钟(自动记录)</td></tr>
+<tr><td>四</td><td>休息(可选20分有氧)</td><td>-</td></tr>
+<tr><td>五</td><td>休息</td><td>-</td></tr>
+<tr><td>六</td><td>同周一(可加量)</td><td>约60-70分钟(自动记录)</td></tr>
+<tr><td>日</td><td>完全休息/低强度有氧</td><td>-</td></tr></table></div>
+<div class="card"><h3>💡 <em>5个动作要领</em></h3><div class="tip">
+<b>通用：</b>每动作轻重量热身1组，组间休1-2分钟；发力呼气、还原吸气；下放2-3秒别甩。关节尖锐痛立刻停。<br><b>1 卧推 3×8-12：</b>脚踩实，肩胛收紧贴凳，握距略宽于肩，下放至乳头附近，肘与身体约45°，不弹震。<br><b>2 高位下拉 3×10-12：</b>大腿卡垫，先沉肩胛再拉至锁骨/上胸，不后仰借力，下放保持背部张力。<br><b>3 腿举 3×10-12：</b>双脚与肩同宽踩中上，膝对脚尖，屈至约90°，下背不离垫，蹬起不锁死。<br><b>4 坐姿肩推 3×10-12：</b>手柄约肩高，推起不锁死肘，不后仰借力。<br><b>5 坐姿划船 3×10-12：</b>先夹肩胛再拉，肘往后带至腹部，还原挺直不弓背。
+</div></div>
+<div class="card"><h3>🍚 <em>每日饮食模板</em> · ~3000kcal</h3>
+<table class="planTbl"><tr><th>餐</th><th>食物</th><th>量</th></tr>
+<tr><td>早</td><td>水煮蛋+吐司/燕麦60g+全脂奶</td><td>蛋3+奶250ml</td></tr>
+<tr><td>午</td><td>鸡胸肉+米饭+蔬菜</td><td>肉200g+饭150-220g</td></tr>
+<tr><td>练后</td><td>乳清蛋白粉(训练日)</td><td>1勺30g</td></tr>
+<tr><td>晚</td><td>牛肉/鱼/鸡胸+米饭+菜+坚果</td><td>肉150g+饭150-200g</td></tr></table>
+<div class="tip">蛋白~145-155g。非训练日可省蛋白粉。体重涨&lt;0.25kg/周 → 午晚主食各+50g；涨&gt;0.5kg/周 → 各−50g。</div></div>
+<div class="card"><h3>❄️ <em>备餐保存</em></h3><p class="mut" style="line-height:1.8">周日集中备餐20-30分。熟米饭/熟肉：3天内冷藏，其余分装冷冻（2-3周）；水煮蛋冷藏5-7天；生鸡蛋冷藏3-5周；叶菜现买现吃。冷冻微波2-3分，冷藏1分钟，米饭加热滴几滴水。分装盒贴日期，先做先吃。</p></div>
+</section>
+</main>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" onclick="toastUndo()">撤销</button></div>
+
+<nav id="nav" class="hidden">
+<button onclick="go('today',this)" class="on"><i>📅</i>今日</button>
+<button onclick="go('train',this)"><i>🏋️</i>训练</button>
+<button onclick="go('food',this)"><i>🍱</i>饮食</button>
+<button onclick="go('weight',this)"><i>⚖️</i>体重</button>
+<button onclick="go('plan',this)"><i>📖</i>计划</button>
+</nav>
+
+<script>
+const EX=[
+{n:"卧推（杠铃/哑铃）",d:"3组×8-12次 · 肩胛收紧，肘约45°，下放至胸轻触"},
+{n:"高位下拉",d:"3组×10-12次 · 先沉肩胛，拉至锁骨/上胸，不后仰"},
+{n:"腿举机",d:"3组×10-12次 · 脚踩中上，屈膝约90°，不锁死"},
+{n:"坐姿肩推机",d:"3组×10-12次 · 手柄约肩高，推起不锁死肘"},
+{n:"坐姿划船机",d:"3组×10-12次 · 先夹肩胛，肘后带至腹部"}];
+const FOODS=[
+{n:"早餐·水煮蛋3个+吐司2片+全脂奶250ml",k:640,p:30,c:55,f:20},
+{n:"午餐·鸡胸200g+米饭200g+蔬菜150g",k:850,p:55,c:70,f:8},
+{n:"练后·乳清蛋白粉1勺",k:120,p:24,c:3,f:1},
+{n:"晚餐·牛肉150g+米饭180g+菜150g+坚果18g",k:900,p:38,c:65,f:32},
+{n:"饭团×2（应急替代午餐）",k:500,p:12,c:85,f:10},
+{n:"燕麦60g+牛奶250ml（早餐替代）",k:450,p:18,c:60,f:12}];
+const T={kcal:3000,p:150,c:365,f:75};
+let user=null,DB=null,curEx=0;
+let SERVER=false,pushTimer=null;
+const HTTP_MODE=location.protocol.indexOf("http")===0;
+async function api(path,opt){const r=await fetch(path,Object.assign({headers:{"Content-Type":"application/json"}},opt||{}));let j={};try{j=await r.json()}catch(e){}return{ok:r.ok,st:r.status,j}}
+function load(){try{DB=JSON.parse(localStorage.getItem("ft_data_"+user))||{w:[],f:[],bw:[]}}catch(e){DB={w:[],f:[],bw:[]}}}
+const dirtyKey=()=>"ft_dirty_"+user;
+function clearDirty(){try{localStorage.removeItem(dirtyKey())}catch(e){}}
+// 本地有未推送改动时: 按 (date,ex,ts) 取并集, 服务端同键优先; 否则服务端整体覆盖
+function mergeRemote(local,remote){const un=(l,r,kf)=>{const m=new Map();
+(l||[]).forEach(x=>m.set(kf(x),x));(r||[]).forEach(x=>m.set(kf(x),x));return [...m.values()]};
+const w=un(local.w,remote.w,x=>x.d+"\u0001"+x.ex+"\u0001"+(x.ts||0)).sort((a,b)=>(b.ts||0)-(a.ts||0));
+const f=un(local.f,remote.f,x=>x.d+"\u0001"+(x.ts||0)+"\u0001"+x.n).sort((a,b)=>(b.ts||0)-(a.ts||0));
+const bw=un(local.bw,remote.bw,x=>x.d).sort((a,b)=>a.d<b.d?-1:1);
+return {w,f,bw}}
+async function loadRemote(){try{const r=await api("/api/export");if(!r.ok)return {ok:false};
+const remote={w:r.j.w||[],f:r.j.f||[],bw:r.j.bw||[]};
+const dirty=localStorage.getItem(dirtyKey())==="1";
+DB=dirty?mergeRemote(DB||{w:[],f:[],bw:[]},remote):remote;
+saveLocal();return {ok:true,merged:dirty}}catch(e){return {ok:false}}}
+function saveLocal(){try{localStorage.setItem("ft_data_"+user,JSON.stringify(DB))}catch(e){}}
+function save(){saveLocal();try{localStorage.setItem(dirtyKey(),"1")}catch(e){}if(!SERVER)return;clearTimeout(pushTimer);pushTimer=setTimeout(pushNow,800)}
+async function pushNow(){try{const r=await api("/api/import",{method:"POST",body:JSON.stringify(DB)});if(r.ok)clearDirty()}catch(e){}}
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+function fmtT(ts){if(!ts)return"";const d=new Date(ts);return " "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("ft::"+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function register(){const u=$("u").value.trim(),p=$("p").value;if(!u||!p){$("authMsg").textContent="请输入用户名和密码";return}
+if(HTTP_MODE){const r=await api("/api/register",{method:"POST",body:JSON.stringify({username:u,password:p})});
+if(r.ok){$("authMsg").textContent="注册成功，已自动登录";enter(u,true);return}
+if(r.st===403||r.st===409){$("authMsg").textContent=r.j.error==="user exists"?"用户已存在，直接登录":"已关闭公开注册（单用户模式），请直接登录";return}
+$("authMsg").textContent="服务端不可达，转本机模式"}
+let us=JSON.parse(localStorage.getItem("ft_users")||"{}");if(us[u]){$("authMsg").textContent="用户已存在，直接登录";return}
+us[u]=await sha(p);localStorage.setItem("ft_users",JSON.stringify(us));$("authMsg").textContent="注册成功，已自动登录";enter(u,false)}
+async function login(){const u=$("u").value.trim(),p=$("p").value;
+if(HTTP_MODE){const r=await api("/api/login",{method:"POST",body:JSON.stringify({username:u,password:p})});
+if(r.ok){enter(u,true);return}
+if(r.st===401){$("authMsg").textContent="用户名或密码错误";return}
+$("authMsg").textContent="服务端不可达，转本机模式"}
+let us=JSON.parse(localStorage.getItem("ft_users")||"{}");
+if(!us[u]){$("authMsg").textContent="用户不存在，先点注册";return}
+if(us[u]!==await sha(p)){$("authMsg").textContent="密码错误";return}enter(u,false)}
+function showBoot(msg){$("boot").classList.remove("hidden");$("authWrap").classList.add("hidden");$("app").classList.add("hidden");$("nav").classList.add("hidden");if(msg)$("bootMsg").textContent=msg}
+function showAuth(msg){$("boot").classList.add("hidden");$("authWrap").classList.remove("hidden");$("app").classList.add("hidden");$("nav").classList.add("hidden");if(msg)$("authMsg").textContent=msg}
+async function enter(u,remote){user=u;SERVER=!!remote;localStorage.setItem("ft_session",u);load();
+$("boot").classList.add("hidden");$("authWrap").classList.add("hidden");
+$("app").classList.remove("hidden");$("nav").classList.remove("hidden");
+$("userBox").innerHTML=u+(SERVER?" 🌐":" 📱")+' <button onclick="logout()">退出</button>';
+init();renderAll();
+if(SERVER)loadRemote().then(r=>{if(r&&r.ok){renderAll();if(r.merged)pushNow()}})}
+async function logout(){if(SERVER){try{if(localStorage.getItem(dirtyKey())==="1"){const r=await api("/api/import",{method:"POST",body:JSON.stringify(DB)});if(r.ok)clearDirty()}}catch(e){}
+try{await api("/api/logout",{method:"POST"})}catch(e){}}localStorage.removeItem("ft_session");location.reload()}
+function init(){$("wDate").value=today();$("fDate").value=today();$("bwDate").value=today();$("todayDate").textContent=today();
+renderChips();
+$("foodChips").innerHTML=FOODS.map((f,i)=>`<span class="chip" onclick="fillFood(${i})">${f.n.slice(0,10)}…</span>`).join("");
+selEx(0);const d=new Date().getDay();const train=[1,3,6].includes(d);
+tmInit();
+$("trainHint").textContent=train?"💪 今天是训练日（一/三/六）：5个基础动作各3组，约60分钟（时长自动记录）":"😴 今天休息：好好吃够3000kcal，睡好就是在长肉";
+const rest=localStorage.getItem("ft_tab");if(rest&&rest!=="today"&&TABS.indexOf(rest)>=0)go(rest,null,true);
+const y=+localStorage.getItem("ft_scroll")||0;if(y>0)setTimeout(()=>window.scrollTo(0,Math.round(y)),0);}
+function selEx(i,el){curEx=i;if(el){document.querySelectorAll("#exChips .chip").forEach(c=>c.classList.remove("on"));el.classList.add("on")}
+$("exName").textContent=(i+1)+". "+EX[i].n;$("exTip").textContent=EX[i].d;
+$("setRows").innerHTML="";for(let s=0;s<3;s++)addSet(60,10);refreshSaveBtns()}
+function addSet(w,r){const d=document.createElement("div");d.className="setRows setRow";
+d.innerHTML=`<span class="mut">组${document.querySelectorAll("#setRows .setRow").length+1}</span><input type="number" placeholder="总重量kg" value="${w??""}"><input type="number" placeholder="次数" value="${r??""}">`;
+$("setRows").appendChild(d);refreshSaveBtns()}
+function sets(){return[...document.querySelectorAll("#setRows .setRow")].map(x=>({w:+x.children[1].value||0,r:+x.children[2].value||0})).filter(s=>s.w||s.r)}
+// ================= 动作级计时 =================
+// 每个动作: st(点开始) / et(点保存) / pause(暂停累计). 当天总时长 = Σ(et-st-pause), 无单独录入.
+const MAX_ACTION_MIN=120;
+let AT={state:"idle",st:0,pauseMs:0,pauseAt:0};
+let tmTick=null,tmLock=0,rowEdit=-1;
+const tmKey=()=>"ft_timer_"+user;
+function tmLoad(){try{const s=JSON.parse(localStorage.getItem(tmKey()));
+if(s&&s.day===today()&&typeof s.st==="number"&&(s.st>0||s.state==="idle"))
+AT=Object.assign({state:"idle",st:0,pauseMs:0,pauseAt:0},s)}catch(e){}}
+function tmSave(){try{localStorage.setItem(tmKey(),JSON.stringify(Object.assign({day:today()},AT)))}catch(e){}}
+function tmClear(){AT={state:"idle",st:0,pauseMs:0,pauseAt:0};tmSave()}
+function hm(ms){const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;
+return (h?h+":":"")+String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0")}
+function hhmm(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function dayOf(d){return DB.w.filter(x=>x.d===d)}
+function actMs(x){if(!x.st||!x.et)return null;return Math.max(0,Math.min(MAX_ACTION_MIN*60000,x.et-x.st-Math.max(0,x.pause||0)))}
+function dayActMs(d){return dayOf(d).reduce((s,x)=>{const v=actMs(x);return s+(v==null?0:v)},0)}
+function hasTimes(d){return dayOf(d).some(x=>x.st&&x.et)}
+function dayTotalMin(d){return hasTimes(d)?Math.max(1,Math.round(dayActMs(d)/60000)):null}
+function daySpanMin(d){const t=dayOf(d).filter(x=>x.st&&x.et);if(!t.length)return null;
+return Math.max(1,Math.round((Math.max(...t.map(x=>x.et))-Math.min(...t.map(x=>x.st)))/60000))}
+function recalcDay(d){const t=dayTotalMin(d);if(t==null)return null;DB.w.forEach(x=>{if(x.d===d)x.dur=t});return t}
+function atElapsedMs(now){now=now||Date.now();if(!AT.st)return 0;
+const extra=AT.state==="paused"?(now-AT.pauseAt):0;return Math.max(0,now-AT.st-Math.max(0,AT.pauseMs)-extra)}
+function atBtn(){const t=Date.now();if(t-tmLock<400)return;tmLock=t;
+if(AT.state==="running"){AT.pauseAt=t;AT.state="paused"}
+else if(AT.state==="paused"){AT.pauseMs+=t-AT.pauseAt;AT.pauseAt=0;AT.state="running"}
+else{AT={state:"running",st:t,pauseMs:0,pauseAt:0}}
+tmSave();tmRender()}
+function tmRender(){const d=$("wDate").value||today(),tot=dayTotalMin(d),span=daySpanMin(d);
+const dn=doneNames(d),prog=EX.filter(e=>dn.has(e.n)).length+"/"+EX.length;
+let main="未计时",st1="点「开始本动作」记录开始时间；不点也能保存，只是这条没有时长",b1="▶ 开始本动作";
+if(AT.state==="running"){main="⏱ 本动作 "+hm(atElapsedMs());st1="计时中 · 点保存即结束本动作";b1="⏸ 暂停"}
+else if(AT.state==="paused"){main="⏸ 本动作 "+hm(atElapsedMs());st1="已暂停 "+hm(AT.pauseMs+(Date.now()-AT.pauseAt))+" · 点继续接着计时";b1="▶ 继续"}
+let day="";
+if(tot!=null){const rest=(span&&tot)?span-tot:0;
+day="今日合计 "+tot+" 分钟"+(span?" · 在馆 "+span+(rest?"（休息 "+rest+"）":""):"")}
+const sub="今日进度 "+prog+(day?" · "+day:" · "+st1);
+$("tmMain").textContent=main;$("tmSub").textContent=sub;$("tmB1").textContent=b1}
+function tmInit(){tmLoad();tmRender();clearInterval(tmTick);
+tmTick=setInterval(()=>{if(AT.state==="running"||AT.state==="paused")tmRender()},1000);
+$("wDate").addEventListener("change",()=>{tmClear();autoPickEx();tmRender();refreshSaveBtns();renderW()});
+if($("setRows"))$("setRows").addEventListener("input",refreshSaveBtns)}
+// ---------- 页内反馈(toast) ----------
+let toastTimer=null,toastAction=null;
+function toast(msg,opt){opt=opt||{};const t=$("toast"),b=$("toastAct");
+$("toastMsg").textContent=msg;toastAction=opt.action||null;b.classList.toggle("hidden",!toastAction);
+t.classList.toggle("err",!!opt.err);t.classList.remove("hidden");
+clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add("hidden"),toastAction?5000:(opt.ms||2600))}
+function toastUndo(){clearTimeout(toastTimer);$("toast").classList.add("hidden");const f=toastAction;toastAction=null;if(f)f()}
+function hideToast(){$("toast").classList.add("hidden")}
+// ---------- 保存按钮状态 / 下一个动作 ----------
+function unlogged(d){const done=new Set(dayOf(d).map(x=>x.ex));return EX.filter(e=>!done.has(e.n))}
+function refreshSaveBtns(){const ok=sets().length>0;const left=unlogged($("wDate").value||today()).length;
+$("saveBtn").disabled=!ok;$("saveNextBtn").disabled=!ok;$("setHint").classList.toggle("hidden",ok);
+$("saveNextBtn").textContent=left?"保存并下一个动作 ▸":`保存（今日 ${EX.length} 个动作已记完 ✓）`}
+function doneNames(d){return DB&&DB.w?new Set(dayOf(d).map(x=>x.ex)):new Set()}
+function renderChips(){if(!DB||!DB.w||!$("exChips"))return;
+const done=doneNames($("wDate").value||today());
+$("exChips").innerHTML=EX.map((e,i)=>{const isDone=done.has(e.n);
+return `<span class="chip${i===curEx?" on":""}${isDone?" done":" todo"}" onclick="chipClick(${i},this)">${i+1}.${e.n.slice(0,4)}${isDone?" ✓":""}</span>`}).join("")}
+function chipClick(i,el){const isDone=doneNames($("wDate").value||today()).has(EX[i].n);
+selEx(i,el);renderChips();
+if(isDone)toast(`${EX[i].n} 今日已记录 · 再记会新增一条`)}
+function autoPickEx(){if(!DB||!DB.w)return renderChips();
+const done=doneNames($("wDate").value||today());
+const j=done.has(EX[curEx].n)?EX.findIndex(e=>!done.has(e.n)):-1;
+renderChips();
+if(j>=0)selEx(j,document.querySelectorAll("#exChips .chip")[j])}
+function gotoNextEx(){const d=$("wDate").value||today();const done=doneNames(d);
+let j=-1;for(let i=1;i<=EX.length;i++){const k=(curEx+i)%EX.length;if(!done.has(EX[k].n)){j=k;break}}
+if(j<0){refreshSaveBtns();return false}
+selEx(j,document.querySelectorAll("#exChips .chip")[j]);
+const r=$("setRows");if(r&&r.scrollIntoView)r.scrollIntoView({block:"center",behavior:"smooth"});return true}
+// ---------- 保存: 以点击时刻作为本动作结束时间 ----------
+function saveWorkout(advance){const s=sets();
+if(!s.length){toast("至少填一组重量/次数",{err:true});return}
+const d=$("wDate").value||today(),now=Date.now();
+const snap=JSON.stringify(DB.w);
+const started=!!AT.st,st0=AT.st||0;
+const pause=started?(AT.state==="paused"?AT.pauseMs+(now-AT.pauseAt):Math.max(0,AT.pauseMs)):0;
+const over=started&&(now-AT.st-pause>MAX_ACTION_MIN*60000);
+DB.w.unshift({d,ex:EX[curEx].n,sets:s,st:started?AT.st:null,et:started?now:null,pause:pause,dur:0,ts:now});
+const tot=recalcDay(d);
+const ex=EX[curEx].n;
+const own=started?Math.max(1,Math.round(Math.min(MAX_ACTION_MIN*60000,now-AT.st-pause)/60000)):null;
+tmClear();save();renderAll();refreshSaveBtns();
+let msg=ex+" 已保存"+(own?` · 本动作 ${own} 分钟（${hhmm(st0)}–${hhmm(now)}）`:" · 未计时")+(tot?` · 今日合计 ${tot} 分钟`:"");
+if(over)msg+=" · 已按 "+MAX_ACTION_MIN+" 分钟上限计入，可在历史里修正";
+if(advance){msg+=gotoNextEx()?` · 下一个：${EX[curEx].n}`:` · 今日 ${EX.length} 个动作已记完 ✅`}
+toast(msg,{action:()=>{try{DB.w=JSON.parse(snap)}catch(e){};recalcDay(d);tmClear();save();renderAll();refreshSaveBtns();toast("已撤销上一条")}})}
+// ---------- 历史: 动作时间 + 行内修正 ----------
+function tsFromTime(d,v){if(!v)return 0;const p=String(v).split(":");const h=+p[0],m=+p[1];
+if(!(h>=0&&h<24&&m>=0&&m<60))return 0;const dt=new Date(d+"T00:00:00");dt.setHours(h,m,0,0);return dt.getTime()}
+function editRow(i){rowEdit=(rowEdit===i)?-1:i;renderW()}
+function cancelRowEdit(){rowEdit=-1;renderW()}
+function applyRowTimes(i){const w=DB.w[i];if(!w)return;
+const st=tsFromTime(w.d,$("stEdit").value),et=tsFromTime(w.d,$("etEdit").value);
+if(!st||!et){toast("请填写开始和结束时间",{err:true});return}
+if(et<=st){toast("结束时间必须晚于开始时间",{err:true});return}
+if(et-st>MAX_ACTION_MIN*60000){toast("单段不能超过 "+MAX_ACTION_MIN+" 分钟",{err:true});return}
+w.st=st;w.et=et;w.pause=0;rowEdit=-1;recalcDay(w.d);save();renderAll();toast("已更新：本动作 "+Math.max(1,Math.round((et-st)/60000))+" 分钟")}
+function clearRowTimes(i){const w=DB.w[i];if(!w)return;
+w.st=null;w.et=null;w.pause=0;rowEdit=-1;recalcDay(w.d);save();renderAll();toast("已清除该动作计时")}
+function renderW(){if(!DB.w.length){$("wList").innerHTML='<p class="mut">暂无记录</p>';return}
+const pos=new Map();DB.w.forEach((x,i)=>pos.set(x,i));
+const ds=[...new Set(DB.w.map(x=>x.d))].sort().reverse().slice(0,8);
+$("wList").innerHTML=ds.map(d=>{const g=dayOf(d).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+const tot=dayTotalMin(d),span=daySpanMin(d),rest=(tot!=null&&span)?Math.max(0,span-tot):0;
+const head=tot!=null?("总时长 "+tot+" 分钟"+(span?" · 在馆 "+span+(rest?"（休息 "+rest+"）":""):"")):"总时长 —（无计时）";
+return `<div class="log" style="border-left-color:var(--acc)"><b>${d}</b> <span class="mut">${g.length} 个动作 · ${head}</span></div>`
++g.map(x=>{const i=pos.get(x),v=actMs(x);
+const tt=v==null?'<span class="mut">—（未计时）</span>':`<b>${hhmm(x.st)}–${hhmm(x.et)}</b> · ${Math.max(1,Math.round(v/60000))} 分钟${x.pause>0?`（含暂停 ${Math.round(x.pause/60000)} 分）`:""}`;
+const ed=rowEdit===i?`<div class="row" style="margin:6px 0 2px"><div class="grow">开始<input id="stEdit" type="time" value="${x.st?hhmm(x.st):""}"></div><div class="grow">结束<input id="etEdit" type="time" value="${x.et?hhmm(x.et):""}"></div></div><div class="row"><button class="btn2 grow sm" onclick="applyRowTimes(${i})">保存</button><button class="btn2 grow sm" onclick="clearRowTimes(${i})">清除</button><button class="btn2 grow sm" onclick="cancelRowEdit()">取消</button></div>`:"";
+return `<div class="log" style="margin-left:10px"><button class="del" onclick="delW(${i})">删除</button><button class="del" onclick="editRow(${i})">${rowEdit===i?"✎ 收起":"✎ 时间"}</button>${x.ex}<br><span class="mut">${x.sets.map(s=>s.w+"kg×"+s.r).join(" ｜ ")}</span><br>${tt}${ed}</div>`}).join("")}).join("")}
+function fillFood(i){const f=FOODS[i];$("fName").value=f.n;$("fKcal").value=f.k;$("fP").value=f.p;$("fC").value=f.c;$("fF").value=f.f}
+function saveFood(){if(!$("fKcal").value){alert("先点预设餐或填写营养");return}
+DB.f.unshift({d:$("fDate").value||today(),m:$("fMeal").value,n:$("fName").value||"自定义",k:+$("fKcal").value||0,p:+$("fP").value||0,c:+$("fC").value||0,f:+$("fF").value||0,ts:Date.now()});save();renderAll();
+$("fName").value=$("fKcal").value=$("fP").value=$("fC").value=$("fF").value="";alert("饮食已保存 ✅")}
+function saveWeight(){const kg=+$("bwKg").value;if(!kg){alert("请输入体重");return}
+DB.bw=DB.bw.filter(x=>x.d!==($("bwDate").value||today()));DB.bw.unshift({d:$("bwDate").value||today(),kg,note:$("bwNote").value||"",ts:Date.now()});
+DB.bw.sort((a,b)=>a.d<b.d?-1:1);save();renderAll();$("bwKg").value=$("bwNote").value="";alert("体重已保存 ✅")}
+function daySum(d){const r={k:0,p:0,c:0,f:0};DB.f.filter(x=>x.d===d).forEach(x=>{r.k+=x.k;r.p+=x.p;r.c+=x.c;r.f+=x.f});return r}
+function renderAll(){const t=today(),s=daySum(t);
+$("kKcal").textContent=`${Math.round(s.k)}/${T.kcal}`;$("kP").textContent=`${Math.round(s.p)}/${T.p}g`;
+$("kC").textContent=`${Math.round(s.c)}/${T.c}g`;$("kF").textContent=`${Math.round(s.f)}/${T.f}g`;
+setBar("barKcal",s.k/T.kcal);setBar("barP",s.p/T.p);
+const tw=DB.w.filter(x=>x.d===t);const ttot=dayTotalMin(t);
+$("todayWorkout").textContent=tw.length?`今日已练 ${tw.length} 个动作：`+tw.map(x=>x.ex.replace(/（.*$/,"").slice(0,6)).join("、")+(ttot?` · 总时长 ${ttot} 分钟`:""):"今日还未记录训练";
+renderW();renderChips();if($("saveNextBtn"))refreshSaveBtns();
+$("fList").innerHTML=DB.f.slice(0,20).map(x=>`<div class="log"><button class="del" onclick="delF(${DB.f.indexOf(x)})">删除</button><b>${x.d}${fmtT(x.ts)} ${x.m}</b> ${x.n}<br><span class="mut">${x.k}kcal · 蛋${x.p}g 碳${x.c}g 脂${x.f}g</span></div>`).join("")||'<p class="mut">暂无记录</p>';
+$("bwList").innerHTML=[...DB.bw].reverse().slice(0,10).map(x=>`<div class="log"><b>${x.d}${fmtT(x.ts)}</b> ${x.kg}kg <span class="mut">${x.note||""}</span></div>`).join("")||'<p class="mut">暂无记录，先记一次当前70kg</p>';
+$("assess").textContent=assess();if(document.getElementById("tmMain"))tmRender();drawChart()}
+function setBar(id,v){const e=$(id);e.querySelector("i").style.width=Math.min(100,v*100)+"%";e.classList.toggle("over",v>1.15)}
+function assess(){if(DB.bw.length<2)return"数据不足：坚持每天晨起空腹称一次，连续7天后这里会自动评估。";
+const last=[...DB.bw].slice(-7),avg=a=>a.reduce((x,y)=>x+y.kg,0)/a.length;
+if(last.length<7)return`已有${last.length}条，还差${7-last.length}天即可出周评估。`;
+const prev=DB.bw.slice(-14,-7);if(prev.length<7)return"再记一周即可对比周均值。";
+const d=avg(last)-avg(prev);
+if(d<0.25)return`近7天均值涨 ${d.toFixed(2)}kg/周，偏慢 → 午/晚主食各+50g，下周再看。`;
+if(d>0.5)return`近7天均值涨 ${d.toFixed(2)}kg/周，偏快（易囤脂）→ 午/晚主食各−50g。`;
+return`近7天均值涨 ${d.toFixed(2)}kg/周 ✅ 完美区间，保持当前饮食+训练。`}
+function drawChart(){const c=$("chart"),x=c.getContext("2d");x.clearRect(0,0,500,160);
+if(DB.bw.length<1){x.fillStyle="#93a1b5";x.font="14px sans-serif";x.fillText("暂无数据",220,80);return}
+const vs=DB.bw.slice(-30);let mn=Math.min(...vs.map(v=>v.kg))-1,mx=Math.max(...vs.map(v=>v.kg))+1;if(mx-mn<1){mx+=.5;mn-=.5}
+x.strokeStyle="#29d3a5";x.lineWidth=2;x.beginPath();
+vs.forEach((v,i)=>{const px=20+i*(460/Math.max(1,vs.length-1)),py=140-(v.kg-mn)/(mx-mn)*120;i?x.lineTo(px,py):x.moveTo(px,py)});
+x.stroke();x.fillStyle="#eef2f7";x.font="11px sans-serif";
+vs.forEach((v,i)=>{if(i%Math.ceil(vs.length/6))return;const px=20+i*(460/Math.max(1,vs.length-1));x.fillText(v.kg,px-8,140-(v.kg-mn)/(mx-mn)*120-6)})}
+function delW(i){const w=DB.w[i];if(!w)return;const d=w.d;DB.w.splice(i,1);
+if(rowEdit>=DB.w.length)rowEdit=-1;recalcDay(d);save();renderAll()}
+function delF(i){DB.f.splice(i,1);save();renderAll()}
+function quickWorkout(){go("train",document.querySelectorAll("nav button")[1])}
+function quickWeight(){go("weight",document.querySelectorAll("nav button")[3])}
+const TABS=["today","train","food","weight","plan"];
+function go(t,el,silent){TABS.forEach(k=>$("tab-"+k).classList.add("hidden"));$("tab-"+t).classList.remove("hidden");
+const bs=document.querySelectorAll("nav button"),i=TABS.indexOf(t);
+if(el&&el.classList){bs.forEach(b=>b.classList.remove("on"));el.classList.add("on")}
+else if(i>=0&&bs[i]){bs.forEach(b=>b.classList.remove("on"));bs[i].classList.add("on")}
+if(t==="train")autoPickEx();
+if(!silent){try{localStorage.setItem("ft_tab",t)}catch(e){}window.scrollTo(0,0)}}
+function exportData(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:"application/json"}));a.download=`fitness-${user}.json`;a.click()}
+function importData(inp){const r=new FileReader();r.onload=()=>{try{DB=JSON.parse(r.result);save();renderAll();alert("导入成功 ✅")}catch(e){alert("文件无效")}};r.readAsText(inp.files[0])}
+let scrollT=null;addEventListener("scroll",()=>{clearTimeout(scrollT);scrollT=setTimeout(()=>{try{localStorage.setItem("ft_scroll",String(Math.round(window.scrollY)))}catch(e){}},250)});
+(async function(){const s=localStorage.getItem("ft_session");if(s)$("u").value=s;
+if(!HTTP_MODE){showAuth();($("u").value?$("p"):$("u")).focus();return}
+if(!s){showAuth();$("u").focus();return}
+showBoot();
+let r={ok:false};try{r=await api("/api/me")}catch(e){}
+if(r.ok&&r.j&&r.j.user){enter(r.j.user,true)}
+else{showAuth();($("u").value?$("p"):$("u")).focus()}})();
+</script>
+</body>
+</html>
