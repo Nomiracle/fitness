@@ -5,6 +5,11 @@ __pycache__/
 .venv/
 venv/
 
+# 前端（源码入库；依赖与构建产物不入库）
+frontend/node_modules
+frontend/dist
+frontend/*.tsbuildinfo
+
 # 凭证与本地配置（一律不入仓，通过 FITNESS_* 环境变量注入）
 .env
 *.env
