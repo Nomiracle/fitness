@@ -7,6 +7,9 @@ export interface SetRowInput {
 
 const rows = defineModel<SetRowInput[]>({ required: true })
 
+/** 行标签（例如「上次」表示这行来自上次记录） */
+withDefaults(defineProps<{ tag?: string }>(), { tag: '' })
+
 function addRow(): void {
   rows.value = [...rows.value, { w: '', r: '' }]
 }
@@ -27,6 +30,7 @@ defineExpose({ valid })
   <div>
     <div v-for="(row, i) in rows" :key="i" class="set-row">
       <span class="mut" style="min-width: 34px">组{{ i + 1 }}</span>
+      <span v-if="tag" class="set-tag">{{ tag }}</span>
       <el-input v-model="row.w" type="number" inputmode="decimal" placeholder="总重量kg" />
       <el-input v-model="row.r" type="number" inputmode="numeric" placeholder="次数" />
       <el-button v-if="rows.length > 1" link type="danger" @click="removeRow(i)">删</el-button>

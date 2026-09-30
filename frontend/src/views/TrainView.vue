@@ -4,8 +4,9 @@ import { EXERCISES, DEFAULT_SET_ROWS } from '@/constants/exercises'
 import { useDataStore } from '@/stores/data'
 import { useTimerStore } from '@/stores/timer'
 import { toast } from '@/stores/ui'
-import { doneNames, daySpanMin, dayTotalMin, recalcDay } from '@/domain/workout'
+import { doneNames, daySpanMin, dayTotalMin, lastSetsFor, recalcDay, type LastSets } from '@/domain/workout'
 import { MAX_ACTION_MS, MAX_ACTION_MIN, hm, hhmm, today } from '@/domain/time'
+import type { WorkoutSetRec } from '@/domain/types'
 import ExerciseChips from '@/components/ExerciseChips.vue'
 import SetRows, { type SetRowInput } from '@/components/SetRows.vue'
 import WorkoutHistory from '@/components/WorkoutHistory.vue'
@@ -17,9 +18,38 @@ const date = ref(today())
 const curEx = ref(0)
 const rows = ref<SetRowInput[]>(blankRows())
 const setRowsRef = ref<InstanceType<typeof SetRows> | null>(null)
+/** 当前「上次」来源（有值表示组行是自动填入的，用于显示提示与行标签） */
+const prefill = ref<LastSets | null>(null)
+/** 用户是否已经动过输入：动过就不再自动覆盖（否则迟到的 /api/export 会冲掉正在输入的数字） */
+const touched = ref(false)
 
 function blankRows(): SetRowInput[] {
   return Array.from({ length: DEFAULT_SET_ROWS }, () => ({ w: '', r: '' }))
+}
+
+function rowsFromSets(sets: WorkoutSetRec[]): SetRowInput[] {
+  return sets.map((s) => ({ w: String(s.w), r: String(s.r) }))
+}
+
+/** 按「上次」预填当前动作的组行（用户已动过输入则跳过） */
+function applyPrefill(): void {
+  if (touched.value) return
+  const last = lastSetsFor(data.db, exercises[curEx.value].n, date.value)
+  prefill.value = last
+  rows.value = last ? rowsFromSets(last.sets) : blankRows()
+}
+
+/** 重新开始一轮输入（切动作 / 切日期 / 保存后）：清掉 touched 再预填 */
+function resetAndPrefill(): void {
+  touched.value = false
+  applyPrefill()
+}
+
+/** 清空组行：改回手动输入，本轮不再自动填 */
+function clearRows(): void {
+  touched.value = true
+  prefill.value = null
+  rows.value = blankRows()
 }
 
 const done = computed(() => doneNames(data.db, date.value))
@@ -64,15 +94,15 @@ const timerBtn = computed(() =>
   timer.at.state === 'running' ? '⏸ 暂停' : timer.at.state === 'paused' ? '▶ 继续' : '▶ 开始本动作',
 )
 
-/** 选择动作：重置组输入；若当天已记录过则提示「再记会新增一条」 */
+/** 选择动作：按「上次」预填组行；若当天已记录过则提示「再记会新增一条」 */
 function selectEx(i: number): void {
   const isDone = done.value.has(exercises[i].n)
   curEx.value = i
-  rows.value = blankRows()
+  resetAndPrefill()
   if (isDone) toast(`${exercises[i].n} 今日已记录 · 再记会新增一条`)
 }
 
-/** 切日期：清当前计时 + 自动跳到当天未记录的动作（v1.5 行为） */
+/** 切日期：清当前计时 + 自动跳到当天未记录的动作（v1.5 行为）+ 按新日期预填 */
 watch(date, () => {
   timer.clear()
   const d = doneNames(data.db, date.value)
@@ -81,8 +111,18 @@ watch(date, () => {
     if (j >= 0) curEx.value = j
     else curEx.value = curEx.value
   }
-  rows.value = blankRows()
+  resetAndPrefill()
 })
+
+/**
+ * 数据到达/变化时补一次预填（登录后 /api/export 是异步的，首次渲染时可能还没有历史数据）。
+ * touched 为 true 时不动用户的输入。
+ */
+watch(
+  () => [curEx.value, date.value, data.db.w.length, data.db.w[0]?.ts ?? 0] as const,
+  () => applyPrefill(),
+  { immediate: true },
+)
 
 function scrollToRows(): void {
   const el = document.querySelector('#setRows')
@@ -137,7 +177,7 @@ function saveWorkout(advance: boolean): void {
   const exName = current.value.n
   const own = started ? Math.max(1, Math.round(Math.min(MAX_ACTION_MS, nowMs - st0 - pause) / 60000)) : null
   timer.clear()
-  rows.value = blankRows()
+  resetAndPrefill()
 
   let msg =
     exName +
@@ -202,8 +242,12 @@ function saveWorkout(advance: boolean): void {
     <div class="card" style="background: #0e1420; margin: 0 0 8px">
       <b style="font-size: 14px">{{ curEx + 1 }}. {{ current.n }}</b>
       <p class="mut">{{ current.d }}</p>
-      <div id="setRows" ref="setRowsRef">
-        <SetRows v-model="rows" />
+      <div v-if="prefill && !touched" class="prefill-hint">
+        <span>已填入 {{ prefill.d }} 的 {{ prefill.sets.length }} 组</span>
+        <button class="link-btn neutral" @click="clearRows">清空</button>
+      </div>
+      <div id="setRows" ref="setRowsRef" @input="touched = true">
+        <SetRows v-model="rows" :tag="prefill && !touched ? '上次' : ''" />
       </div>
     </div>
 

@@ -1,6 +1,6 @@
 /** 训练记录派生量（v1.5 逐字移植：无计时的动作一律不计入时长） */
 import { MAX_ACTION_MS } from './time'
-import type { FitnessDB, WorkoutRec } from './types'
+import type { FitnessDB, WorkoutRec, WorkoutSetRec } from './types'
 
 export function dayRecords(db: FitnessDB, d: string): WorkoutRec[] {
   return db.w.filter((x) => x.d === d)
@@ -55,6 +55,38 @@ export interface TimerState {
   pauseMs: number
   /** 进入暂停的时刻 */
   pauseAt: number
+}
+
+/** 组行上限（与后端每动作 20 组限制一致） */
+export const MAX_SET_ROWS = 20
+
+export interface LastSets {
+  /** 来源记录日期 */
+  d: string
+  /** 来源记录创建时间 */
+  ts: number
+  sets: WorkoutSetRec[]
+}
+
+/**
+ * 「上次」填充数据源：同一动作、日期 ≤ onOrBeforeDate 的最近一条记录（同日取 ts 更晚的），
+ * 照此预填重量×次数。找不到（或历史记录没有组数据）返回 null → 由调用方显示空行。
+ * 纯函数：不修改 db，sets 是深拷贝出的新对象。
+ */
+export function lastSetsFor(db: FitnessDB, exName: string, onOrBeforeDate: string): LastSets | null {
+  let best: WorkoutRec | null = null
+  for (const x of db.w) {
+    if (x.ex !== exName) continue
+    if (!x.sets || !x.sets.length) continue
+    if (x.d > onOrBeforeDate) continue // YYYY-MM-DD 可直接字符串比较
+    if (!best || x.d > best.d || (x.d === best.d && (x.ts || 0) > (best.ts || 0))) best = x
+  }
+  if (!best) return null
+  return {
+    d: best.d,
+    ts: best.ts || 0,
+    sets: best.sets.slice(0, MAX_SET_ROWS).map((s) => ({ w: s.w, r: s.r })),
+  }
 }
 
 export function idleTimer(): TimerState {
