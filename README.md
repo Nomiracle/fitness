@@ -38,8 +38,9 @@ bash deploy/build-web.sh             # 构建并发布到 nginx 静态目录（�
 | GET | `/api/export` | 全量 `{w,f,bw}` |
 | POST | `/api/import` | 全量覆盖写入（先清该用户数据再插入） |
 
-数据形状：`w:[{d,ex,sets:[{w,r}],dur,st,et,pause,ts}]`、`f:[{d,m,n,k,p,c,f,ts}]`、`bw:[{d,kg,note,ts}]`。
+数据形状：`w:[{d,ex,sets:[{w,r}],dur,st,et,pause,ts}]`、`f:[{d,m,n,k,p,c,f,cr,ts}]`、`bw:[{d,kg,note,ts}]`。
 `st/et/pause` 是动作级计时的秒级毫秒时间戳与暂停累计，`dur` 由当天所有动作的 `et−st−pause` 求和派生（前端没有单独录入入口）。
+`cr` 是补剂条目的肌酸克数（缺省/老数据按 0，不参与热量与宏量加总，见「肌酸快捷记录」）。
 服务端限制：单类最多 2000 条、每个动作最多 20 组、请求体 ≤ 2MB、日期必须 `YYYY-MM-DD`。
 
 前端写入语义：改本地立即生效并置 `ft_dirty_<user>`，800ms 防抖后整体 POST `/api/import`，**只有推送成功才清脏标记**；
@@ -68,6 +69,19 @@ bash deploy/build-web.sh             # 构建并发布到 nginx 静态目录（�
 - 组行数 = 上次的组数（上限 20，与后端限制一致）。
 - **用户一旦改动任一组输入就不再自动覆盖** —— 否则登录后迟到的 `/api/export` 会把正在输入的数字冲掉。
 - 显式「清空」后本轮不再自动填；预填只是输入默认值，不写数据、不产生记录（数据仍是保存时才落库）。
+
+## 肌酸快捷记录
+
+饮食页与首页「快捷记录」各有一个肌酸入口，一键落一条 `补剂` 餐次记录（`n:'肌酸5g'`、`k/p/c/f` 全 0、`cr:5`）：
+
+- 首页按钮（`TodayView`）：点一下即记默认剂量 5g；当天累计达标后按钮变绿并显示已记克数，仍可补记。
+- 饮食页（`FoodView`）：剂量输入框（1–20g，默认 `CREATINE.defaultG`）+「记录肌酸」按钮，可先改日期再记。
+- 统计独立：`creatineSum(db, d)` 单独汇总，**不进 `daySum`** —— `daySum` 的 `{k,p,c,f}` 形状被 legacy 差分向量冻结（`parity.test.ts` 逐值比对），加字段会直接破门禁；肌酸本身也不是宏量营养素。
+- 目标 `TARGETS.cr = 5`（g/天），在今日概览的 KPI 与进度条里显示。
+- 不走 `saveFood` 的「必须先填热量」校验：肌酸没有热量，但仍需一条可追溯记录。
+
+后端配套：`ft_foods.creatine`（FLOAT，默认 0，`migrate_schema()` 幂等 `ADD COLUMN IF NOT EXISTS` 自动补列），`/api/export` 输出 `cr`、`/api/import` 读取 `cr`。
+**少了这一步，整包覆盖写回时 `cr` 会被服务端丢掉** —— 前端加字段必须同时改后端并重建镜像。
 
 ## 已知限制
 

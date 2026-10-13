@@ -17,10 +17,13 @@ export const FOOD_PRESETS: FoodPreset[] = [
 ]
 
 /** 餐次下拉项 */
-export const MEALS = ['早餐', '午餐', '训练后加餐', '晚餐', '加餐'] as const
+export const MEALS = ['早餐', '午餐', '训练后加餐', '晚餐', '加餐', '补剂'] as const
 
 /** 每日营养目标 */
-export const TARGETS = { kcal: 3000, p: 150, c: 365, f: 75 }
+export const TARGETS = { kcal: 3000, p: 150, c: 365, f: 75, cr: 5 }
+
+/** 肌酸快捷记录的默认剂量（克）与可选范围 */
+export const CREATINE = { defaultG: 5, minG: 1, maxG: 20, meal: '补剂' }
 
 /** 训练日（周一/三/六） */
 export const TRAINING_WEEKDAYS = [1, 3, 6]

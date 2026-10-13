@@ -87,6 +87,7 @@ class FoodLog(Base):
     protein = Column(Float, default=0)
     carbs = Column(Float, default=0)
     fat = Column(Float, default=0)
+    creatine = Column(Float, default=0)
     created_at = Column(BigInteger, default=0)
 
 
@@ -111,11 +112,14 @@ def migrate_schema():
         "ALTER TABLE ft_workouts ADD COLUMN IF NOT EXISTS start_ts BIGINT NULL",
         "ALTER TABLE ft_workouts ADD COLUMN IF NOT EXISTS end_ts BIGINT NULL",
         "ALTER TABLE ft_workouts ADD COLUMN IF NOT EXISTS pause_ms BIGINT NULL",
+        # 肌酸(克): 补剂条目用, 老行为 0; 缺这列会让前端 cr 字段在整包覆盖写回时丢失
+        "ALTER TABLE ft_foods ADD COLUMN IF NOT EXISTS creatine FLOAT DEFAULT 0",
     ]
     with engine.begin() as conn:
         for s in stmts:
             conn.execute(text(s))
-    print("schema ok: ft_workouts.start_ts/end_ts/pause_ms", flush=True)
+    print("schema ok: ft_workouts.start_ts/end_ts/pause_ms, ft_foods.creatine",
+          flush=True)
 
 
 try:
@@ -249,6 +253,7 @@ class Handler(BaseHTTPRequestHandler):
                       "ts": x.created_at or 0} for x in ws]
                 f = [{"d": x.date, "m": x.meal, "n": x.name, "k": x.kcal,
                       "p": x.protein, "c": x.carbs, "f": x.fat,
+                      "cr": x.creatine or 0,
                       "ts": x.created_at or 0}
                      for x in db.query(FoodLog).filter_by(
                          user_id=me["id"]).order_by(
@@ -370,6 +375,7 @@ class Handler(BaseHTTPRequestHandler):
                                    meal=sstr(x.get("m"), 32), name=sstr(x.get("n")),
                                    kcal=sfloat(x.get("k")), protein=sfloat(x.get("p")),
                                    carbs=sfloat(x.get("c")), fat=sfloat(x.get("f")),
+                                   creatine=sfloat(x.get("cr")),
                                    created_at=sint(x.get("ts"))))
                 seen = set()
                 for x in bw[:2000]:

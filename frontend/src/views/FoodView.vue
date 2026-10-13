@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Upload } from '@element-plus/icons-vue'
-import { MEALS, type FoodPreset } from '@/constants/foods'
+import { CREATINE, MEALS, type FoodPreset } from '@/constants/foods'
 import { useDataStore } from '@/stores/data'
 import { toast } from '@/stores/ui'
 import { fmtT, today } from '@/domain/time'
@@ -18,12 +18,35 @@ const name = ref('')
 const macros = ref<MacroInput>({ k: '', p: '', c: '', f: '' })
 const fileInput = ref<HTMLInputElement | null>(null)
 
+/** 肌酸快捷记录剂量（克） */
+const creatineG = ref<number>(CREATINE.defaultG)
+
 const history = computed(() => data.db.f.slice(0, 20))
 const canSave = computed(() => !!Number(macros.value.k))
 
 function pick(preset: FoodPreset): void {
   name.value = preset.n
   macros.value = { k: String(preset.k), p: String(preset.p), c: String(preset.c), f: String(preset.f) }
+}
+
+/**
+ * 肌酸快捷记录：一键落一条「补剂」条目——0 热量、0 宏量、cr=剂量。
+ * 不走 saveFood 的「必须先有热量」校验：肌酸没有热量，但仍需一条可追溯记录。
+ */
+function saveCreatine(): void {
+  const g = Number(creatineG.value) || CREATINE.defaultG
+  data.addFood({
+    d: date.value || today(),
+    m: CREATINE.meal,
+    n: `肌酸${+g.toFixed(1)}g`,
+    k: 0,
+    p: 0,
+    c: 0,
+    f: 0,
+    cr: +g.toFixed(1),
+    ts: Date.now(),
+  })
+  toast(`肌酸 ${+g.toFixed(1)}g 已记录 ✅`)
 }
 
 function saveFood(): void {
@@ -113,6 +136,27 @@ async function onFile(e: Event): Promise<void> {
 
     <el-button type="primary" style="width: 100%; margin-top: 8px" @click="saveFood">保存饮食</el-button>
     <p class="mut">点预设餐可一键填入营养，再按保存。</p>
+
+    <el-divider style="margin: 14px 0 10px" />
+
+    <div class="row" style="align-items: flex-end">
+      <div class="grow">
+        肌酸（克）
+        <el-input-number
+          v-model="creatineG"
+          :min="CREATINE.minG"
+          :max="CREATINE.maxG"
+          :step="1"
+          style="width: 100%"
+        />
+      </div>
+      <div class="grow">
+        <el-button type="primary" style="width: 100%" @click="saveCreatine">💪 记录肌酸</el-button>
+      </div>
+    </div>
+    <p class="mut">
+      一键记一条「补剂」记录（不占热量与宏量，只统计肌酸）。肌酸每天 {{ CREATINE.defaultG }}g、休息日也要吃。
+    </p>
   </div>
 
   <div class="card">
@@ -124,7 +168,8 @@ async function onFile(e: Event): Promise<void> {
       </span>
       <b>{{ x.d }}{{ fmtT(x.ts) }} {{ x.m }}</b> {{ x.n }}
       <br />
-      <span class="mut">{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
+      <span v-if="x.cr" class="mut">💪 肌酸 {{ x.cr }}g · 不计热量</span>
+      <span v-else class="mut">{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
     </div>
 
     <div class="row" style="margin-top: 8px">

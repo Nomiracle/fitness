@@ -3,18 +3,26 @@ import { computed } from 'vue'
 import { TARGETS } from '@/constants/foods'
 import { barWidth, isOver, type MacroSum } from '@/domain/nutrition'
 
-const props = defineProps<{ sum: MacroSum }>()
+const props = withDefaults(defineProps<{ sum: MacroSum; creatine?: number }>(), {
+  creatine: 0,
+})
 
 const kpi = computed(() => [
   { label: '热量', value: `${Math.round(props.sum.k)}/${TARGETS.kcal}`, unit: 'kcal' },
   { label: '蛋白', value: `${Math.round(props.sum.p)}/${TARGETS.p}g`, unit: '目标140-155' },
   { label: '碳水', value: `${Math.round(props.sum.c)}/${TARGETS.c}g`, unit: '目标350-400' },
   { label: '脂肪', value: `${Math.round(props.sum.f)}/${TARGETS.f}g`, unit: '目标70-80' },
+  {
+    label: '肌酸',
+    value: `${+(props.creatine || 0).toFixed(1)}/${TARGETS.cr}g`,
+    unit: props.creatine >= TARGETS.cr ? '✅ 已达标' : '今天还没吃够',
+  },
 ])
 
 const bars = computed(() => [
   { label: '热量进度', value: props.sum.k, target: TARGETS.kcal },
   { label: '蛋白质进度', value: props.sum.p, target: TARGETS.p },
+  { label: '肌酸进度', value: props.creatine, target: TARGETS.cr },
 ])
 </script>
 

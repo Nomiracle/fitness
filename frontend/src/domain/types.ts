@@ -35,6 +35,8 @@ export interface FoodRec {
   p: number
   c: number
   f: number
+  /** 肌酸克数（补剂条目用；老数据没有该字段，一律按 0 处理） */
+  cr?: number
   ts: number
 }
 
