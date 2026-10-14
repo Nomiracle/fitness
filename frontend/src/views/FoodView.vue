@@ -6,27 +6,47 @@ import { useDataStore } from '@/stores/data'
 import { toast } from '@/stores/ui'
 import { fmtT, today } from '@/domain/time'
 import type { FitnessDB } from '@/domain/types'
+import { toFoodRecs, type FoodDraft } from '@/domain/foodDraft'
 import { downloadJson, readJsonFile } from '@/utils/download'
 import FoodPresetChips from '@/components/FoodPresetChips.vue'
-import MacroInputs, { type MacroInput } from '@/components/MacroInputs.vue'
 
 const data = useDataStore()
 
 const date = ref(today())
 const meal = ref<string>(MEALS[0])
-const name = ref('')
-const macros = ref<MacroInput>({ k: '', p: '', c: '', f: '' })
+const items = ref<FoodDraft[]>([{ n: '', k: '', p: '', c: '', f: '' }])
 const fileInput = ref<HTMLInputElement | null>(null)
 
 /** 肌酸快捷记录剂量（克） */
 const creatineG = ref<number>(CREATINE.defaultG)
 
 const history = computed(() => data.db.f.slice(0, 20))
-const canSave = computed(() => !!Number(macros.value.k))
+const mealTotals = computed(() => items.value.reduce((sum, x) => ({
+  k: sum.k + (Number(x.k) || 0),
+  p: sum.p + (Number(x.p) || 0),
+  c: sum.c + (Number(x.c) || 0),
+  f: sum.f + (Number(x.f) || 0),
+}), { k: 0, p: 0, c: 0, f: 0 }))
 
+function blankItem(): FoodDraft {
+  return { n: '', k: '', p: '', c: '', f: '' }
+}
+
+function addItem(): void {
+  items.value.push(blankItem())
+}
+
+function removeItem(index: number): void {
+  if (items.value.length === 1) {
+    items.value[0] = blankItem()
+    return
+  }
+  items.value.splice(index, 1)
+}
+
+/** 点预设：把复合项拆成多条单项草稿，用户可逐项改份量后再保存 */
 function pick(preset: FoodPreset): void {
-  name.value = preset.n
-  macros.value = { k: String(preset.k), p: String(preset.p), c: String(preset.c), f: String(preset.f) }
+  items.value = preset.items.map((x) => ({ n: x.n, k: String(x.k), p: String(x.p), c: String(x.c), f: String(x.f) }))
 }
 
 /**
@@ -50,23 +70,14 @@ function saveCreatine(): void {
 }
 
 function saveFood(): void {
-  if (!canSave.value) {
-    toast('先点预设餐或填写热量', { err: true })
+  const records = toFoodRecs(items.value, date.value || today(), meal.value, Date.now())
+  if (!records) {
+    toast('每项都需要填写食物名称和大于 0 的热量', { err: true })
     return
   }
-  data.addFood({
-    d: date.value || today(),
-    m: meal.value,
-    n: name.value || '自定义',
-    k: Number(macros.value.k) || 0,
-    p: Number(macros.value.p) || 0,
-    c: Number(macros.value.c) || 0,
-    f: Number(macros.value.f) || 0,
-    ts: Date.now(),
-  })
-  name.value = ''
-  macros.value = { k: '', p: '', c: '', f: '' }
-  toast('饮食已保存 ✅')
+  data.addFoods(records)
+  items.value = [blankItem()]
+  toast(`已保存 ${records.length} 项饮食 ✅`)
 }
 
 function removeFood(index: number): void {
@@ -126,16 +137,24 @@ async function onFile(e: Event): Promise<void> {
 
     <FoodPresetChips style="margin: 8px 0" @pick="pick" />
 
-    <div class="row">
-      <div class="grow">
-        食物
-        <el-input v-model="name" placeholder="例：鸡胸肉200g" />
+    <div v-for="(item, index) in items" :key="index" class="food-item">
+      <div class="row" style="align-items: center">
+        <b class="grow">食物 {{ index + 1 }}</b>
+        <button class="link-btn" @click="removeItem(index)">移除</button>
+      </div>
+      <el-input v-model="item.n" placeholder="食物名称和份量，如鸡胸肉200g" />
+      <div class="row" style="margin-top: 4px">
+        <div class="grow">热量 kcal<el-input v-model="item.k" type="number" inputmode="decimal" placeholder="必填" /></div>
+        <div class="grow">蛋白 g<el-input v-model="item.p" type="number" inputmode="decimal" placeholder="0" /></div>
+        <div class="grow">碳水 g<el-input v-model="item.c" type="number" inputmode="decimal" placeholder="0" /></div>
+        <div class="grow">脂肪 g<el-input v-model="item.f" type="number" inputmode="decimal" placeholder="0" /></div>
       </div>
     </div>
-    <MacroInputs v-model="macros" style="margin-top: 4px" />
-
-    <el-button type="primary" style="width: 100%; margin-top: 8px" @click="saveFood">保存饮食</el-button>
-    <p class="mut">点预设餐可一键填入营养，再按保存。</p>
+    <div class="row" style="margin-top: 8px">
+      <el-button class="grow" @click="addItem">＋ 添加食物项</el-button>
+      <el-button class="grow" type="primary" @click="saveFood">保存 {{ items.length }} 项</el-button>
+    </div>
+    <p class="mut">本餐合计：{{ mealTotals.k }} kcal · 蛋白 {{ mealTotals.p }}g · 碳水 {{ mealTotals.c }}g · 脂肪 {{ mealTotals.f }}g。快捷预设会拆成单项，可逐项修改后保存。</p>
 
     <el-divider style="margin: 14px 0 10px" />
 

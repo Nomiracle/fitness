@@ -151,6 +151,11 @@ export const useDataStore = defineStore('data', () => {
     save()
   }
 
+  function addFoods(recs: FoodRec[]): void {
+    db.value.f.unshift(...recs)
+    save()
+  }
+
   function removeFood(index: number): void {
     db.value.f.splice(index, 1)
     save()
@@ -202,6 +207,7 @@ export const useDataStore = defineStore('data', () => {
     applyTimes,
     clearTimes,
     addFood,
+    addFoods,
     removeFood,
     sumOf,
     upsertBody,

@@ -214,6 +214,20 @@ body {
   margin: 6px 0;
 }
 
+/* 饮食单项记录：每项一张小卡，便于逐项调整份量/营养 */
+.food-item {
+  background: #0e1420;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin: 8px 0;
+}
+
+.food-item b {
+  color: var(--acc);
+  font-size: 12px;
+}
+
 .log {
   font-size: 12px;
   background: #0e1420;
