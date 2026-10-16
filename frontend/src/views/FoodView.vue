@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Upload } from '@element-plus/icons-vue'
-import { CREATINE, MEALS, type FoodPreset } from '@/constants/foods'
+import { CREATINE, MEALS, WHEY, type FoodPreset } from '@/constants/foods'
 import { useDataStore } from '@/stores/data'
 import { toast } from '@/stores/ui'
 import { fmtT, today } from '@/domain/time'
 import type { FitnessDB } from '@/domain/types'
 import { toFoodRecs, type FoodDraft } from '@/domain/foodDraft'
+import { powderMacros, powderRec, powderSum } from '@/domain/powder'
 import { downloadJson, readJsonFile } from '@/utils/download'
 import FoodPresetChips from '@/components/FoodPresetChips.vue'
 
@@ -19,6 +20,11 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 /** 肌酸快捷记录剂量（克） */
 const creatineG = ref<number>(CREATINE.defaultG)
+
+/** 蛋白粉快捷记录剂量（克）与按标签折算的宏量预览 */
+const powderG = ref<number>(WHEY.defaultG)
+const powderPreview = computed(() => powderMacros(powderG.value))
+const powderToday = computed(() => powderSum(data.db, date.value || today()))
 
 const history = computed(() => data.db.f.slice(0, 20))
 const mealTotals = computed(() => items.value.reduce((sum, x) => ({
@@ -44,9 +50,19 @@ function removeItem(index: number): void {
   items.value.splice(index, 1)
 }
 
-/** 点预设：把复合项拆成多条单项草稿，用户可逐项改份量后再保存 */
+/**
+ * 点预设：复合餐预设整表预填（保持 v1.5 语义）；
+ * 单条目预设（蛋白粉/饭团这种「一件东西」）改为**追加**，否则想在一餐里多加一勺就被冲掉了。
+ * 追加前只清掉完全空白的草稿行，半填的输入一律保留。
+ */
 function pick(preset: FoodPreset): void {
-  items.value = preset.items.map((x) => ({ n: x.n, k: String(x.k), p: String(x.p), c: String(x.c), f: String(x.f) }))
+  const drafts = preset.items.map((x) => ({ n: x.n, k: String(x.k), p: String(x.p), c: String(x.c), f: String(x.f) }))
+  if (preset.items.length === 1) {
+    const kept = items.value.filter((x) => x.n.trim() || x.k || x.p || x.c || x.f)
+    items.value = [...kept, ...drafts]
+    return
+  }
+  items.value = drafts
 }
 
 /**
@@ -67,6 +83,16 @@ function saveCreatine(): void {
     ts: Date.now(),
   })
   toast(`肌酸 ${+g.toFixed(1)}g 已记录 ✅`)
+}
+
+/**
+ * 蛋白粉快捷记录：按标签折算宏量后落一条「补剂」记录。
+ * 与肌酸不同，宏量要进 daySum（蛋白目标），`pw` 只用于单独留痕。
+ */
+function savePowder(): void {
+  const rec = powderRec(date.value || today(), powderG.value, Date.now())
+  data.addFood(rec)
+  toast(`${rec.n} 已记录 ✅ 热量 ${rec.k}kcal · 蛋白 ${rec.p}g（计入目标）`)
 }
 
 function saveFood(): void {
@@ -160,6 +186,29 @@ async function onFile(e: Event): Promise<void> {
 
     <div class="row" style="align-items: flex-end">
       <div class="grow">
+        蛋白粉（克）
+        <el-input-number
+          v-model="powderG"
+          :min="WHEY.minG"
+          :max="WHEY.maxG"
+          :step="WHEY.stepG"
+          style="width: 100%"
+        />
+      </div>
+      <div class="grow">
+        <el-button type="primary" style="width: 100%" @click="savePowder">🥛 记录蛋白粉</el-button>
+      </div>
+    </div>
+    <p class="mut">
+      按标签每 100g：{{ WHEY.per100g.k }}kcal / 蛋白 {{ WHEY.per100g.p }}g / 碳水 {{ WHEY.per100g.c }}g / 脂肪 {{ WHEY.per100g.f }}g 折算 ——
+      {{ powderG }}g ≈ {{ powderPreview.k }}kcal · 蛋白 {{ powderPreview.p }}g，
+      <b>计入热量与蛋白目标</b>（今天已记 {{ +powderToday.toFixed(1) }}g）。
+    </p>
+
+    <el-divider style="margin: 14px 0 10px" />
+
+    <div class="row" style="align-items: flex-end">
+      <div class="grow">
         肌酸（克）
         <el-input-number
           v-model="creatineG"
@@ -188,7 +237,7 @@ async function onFile(e: Event): Promise<void> {
       <b>{{ x.d }}{{ fmtT(x.ts) }} {{ x.m }}</b> {{ x.n }}
       <br />
       <span v-if="x.cr" class="mut">💪 肌酸 {{ x.cr }}g · 不计热量</span>
-      <span v-else class="mut">{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
+      <span v-else class="mut"><template v-if="x.pw">🥛 蛋白粉 {{ x.pw }}g（已计入蛋白）· </template>{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
     </div>
 
     <div class="row" style="margin-top: 8px">

@@ -68,5 +68,18 @@ export const TARGETS = { kcal: 3000, p: 150, c: 365, f: 75, cr: 5 }
 /** 肌酸快捷记录的默认剂量（克）与可选范围 */
 export const CREATINE = { defaultG: 5, minG: 1, maxG: 20, meal: '补剂' }
 
+/**
+ * 乳清蛋白粉标签值（每 100g 粉）与默认冲调剂量。
+ * 换产品只改 `per100g` 这一处：宏量按 `克数 / 100 × 标签值` 线性折算，再照常计入热量与蛋白目标。
+ */
+export const WHEY = {
+  per100g: { k: 390, p: 80, c: 8, f: 5 },
+  defaultG: 20,
+  minG: 5,
+  maxG: 100,
+  stepG: 5,
+  meal: '补剂',
+}
+
 /** 训练日（周一/三/六） */
 export const TRAINING_WEEKDAYS = [1, 3, 6]

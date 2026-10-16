@@ -5,8 +5,9 @@ import { useDataStore } from '@/stores/data'
 import { assess } from '@/domain/assessment'
 import { dayTotalMin } from '@/domain/workout'
 import { creatineSum } from '@/domain/nutrition'
+import { powderMacros, powderRec, powderSum } from '@/domain/powder'
 import { today } from '@/domain/time'
-import { CREATINE, TARGETS, TRAINING_WEEKDAYS } from '@/constants/foods'
+import { CREATINE, TARGETS, TRAINING_WEEKDAYS, WHEY } from '@/constants/foods'
 import { toast } from '@/stores/ui'
 import KpiGrid from '@/components/KpiGrid.vue'
 
@@ -16,6 +17,7 @@ const data = useDataStore()
 const d = today()
 const sum = computed(() => data.sumOf(d))
 const creatine = computed(() => creatineSum(data.db, d))
+const powder = computed(() => powderSum(data.db, d))
 
 const isTrainingDay = computed(() => TRAINING_WEEKDAYS.includes(new Date().getDay()))
 const trainHint = computed(() =>
@@ -41,6 +43,13 @@ function quickCreatine(): void {
   toast(`肌酸 ${g}g 已记录 ✅（今日 ${+(creatineSum(data.db, d)).toFixed(1)}/${TARGETS.cr}g）`)
 }
 
+/** 首页一键记蛋白粉：默认 20g，宏量按标签折算后计入热量/蛋白目标，pw 留痕 */
+function quickPowder(): void {
+  const rec = powderRec(d, WHEY.defaultG, Date.now())
+  data.addFood(rec)
+  toast(`${rec.n} 已记录 ✅ 蛋白 +${rec.p}g（今日蛋白粉 ${+(powderSum(data.db, d)).toFixed(1)}g）`)
+}
+
 const todayWorkouts = computed(() => data.db.w.filter((x) => x.d === d))
 const totalMin = computed(() => dayTotalMin(data.db, d))
 const workoutText = computed(() => {
@@ -56,7 +65,7 @@ const assessText = computed(() => assess(data.db))
   <div class="card">
     <h3>📅 <em>今日概览</em> <span class="mut">{{ d }}</span></h3>
     <p class="mut">{{ trainHint }}</p>
-    <KpiGrid :sum="sum" :creatine="creatine" />
+    <KpiGrid :sum="sum" :creatine="creatine" :powder="powder" />
     <p class="mut" style="margin-top: 8px">{{ workoutText }}</p>
   </div>
 
@@ -68,6 +77,14 @@ const assessText = computed(() => assess(data.db))
       @click="quickCreatine"
     >
       {{ creatine >= TARGETS.cr ? '💪 肌酸已达标（今天 ' + +creatine.toFixed(1) + 'g，可再记）' : '💪 记录肌酸 ' + CREATINE.defaultG + 'g' }}
+    </el-button>
+    <el-button
+      style="width: 100%; margin: 8px 0 0"
+      type="primary"
+      plain
+      @click="quickPowder"
+    >
+      {{ '🥛 记录蛋白粉 ' + WHEY.defaultG + 'g（蛋白 +' + powderMacros(WHEY.defaultG).p + 'g）' + (powder ? ' · 今天已记 ' + +powder.toFixed(1) + 'g' : '') }}
     </el-button>
     <div class="row" style="margin-top: 8px">
       <el-button class="grow" @click="router.push({ name: 'train' })">+ 记录今日训练</el-button>

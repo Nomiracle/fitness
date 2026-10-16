@@ -3,8 +3,9 @@ import { computed } from 'vue'
 import { TARGETS } from '@/constants/foods'
 import { barWidth, isOver, type MacroSum } from '@/domain/nutrition'
 
-const props = withDefaults(defineProps<{ sum: MacroSum; creatine?: number }>(), {
+const props = withDefaults(defineProps<{ sum: MacroSum; creatine?: number; powder?: number }>(), {
   creatine: 0,
+  powder: 0,
 })
 
 const kpi = computed(() => [
@@ -16,6 +17,11 @@ const kpi = computed(() => [
     label: '肌酸',
     value: `${+(props.creatine || 0).toFixed(1)}/${TARGETS.cr}g`,
     unit: props.creatine >= TARGETS.cr ? '✅ 已达标' : '今天还没吃够',
+  },
+  {
+    label: '蛋白粉',
+    value: `${+(props.powder || 0).toFixed(1)}g`,
+    unit: props.powder ? '已计入蛋白' : '今天还没喝',
   },
 ])
 

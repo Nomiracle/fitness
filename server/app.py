@@ -88,6 +88,8 @@ class FoodLog(Base):
     carbs = Column(Float, default=0)
     fat = Column(Float, default=0)
     creatine = Column(Float, default=0)
+    # 蛋白粉克数: 补剂条目用, 老行为 0; 宏量(kcal/protein/carbs/fat)由前端按标签折算后照常写入
+    protein_powder = Column(Float, default=0)
     created_at = Column(BigInteger, default=0)
 
 
@@ -114,11 +116,13 @@ def migrate_schema():
         "ALTER TABLE ft_workouts ADD COLUMN IF NOT EXISTS pause_ms BIGINT NULL",
         # 肌酸(克): 补剂条目用, 老行为 0; 缺这列会让前端 cr 字段在整包覆盖写回时丢失
         "ALTER TABLE ft_foods ADD COLUMN IF NOT EXISTS creatine FLOAT DEFAULT 0",
+        # 蛋白粉(克): 补剂条目用, 老行为 0; 缺这列会让前端 pw 字段在整包覆盖写回时丢失
+        "ALTER TABLE ft_foods ADD COLUMN IF NOT EXISTS protein_powder FLOAT DEFAULT 0",
     ]
     with engine.begin() as conn:
         for s in stmts:
             conn.execute(text(s))
-    print("schema ok: ft_workouts.start_ts/end_ts/pause_ms, ft_foods.creatine",
+    print("schema ok: ft_workouts.start_ts/end_ts/pause_ms, ft_foods.creatine/protein_powder",
           flush=True)
 
 
@@ -254,6 +258,7 @@ class Handler(BaseHTTPRequestHandler):
                 f = [{"d": x.date, "m": x.meal, "n": x.name, "k": x.kcal,
                       "p": x.protein, "c": x.carbs, "f": x.fat,
                       "cr": x.creatine or 0,
+                      "pw": x.protein_powder or 0,
                       "ts": x.created_at or 0}
                      for x in db.query(FoodLog).filter_by(
                          user_id=me["id"]).order_by(
@@ -376,6 +381,7 @@ class Handler(BaseHTTPRequestHandler):
                                    kcal=sfloat(x.get("k")), protein=sfloat(x.get("p")),
                                    carbs=sfloat(x.get("c")), fat=sfloat(x.get("f")),
                                    creatine=sfloat(x.get("cr")),
+                                   protein_powder=sfloat(x.get("pw")),
                                    created_at=sint(x.get("ts"))))
                 seen = set()
                 for x in bw[:2000]:

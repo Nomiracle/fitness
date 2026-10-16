@@ -38,9 +38,10 @@ bash deploy/build-web.sh             # 构建并发布到 nginx 静态目录（�
 | GET | `/api/export` | 全量 `{w,f,bw}` |
 | POST | `/api/import` | 全量覆盖写入（先清该用户数据再插入） |
 
-数据形状：`w:[{d,ex,sets:[{w,r}],dur,st,et,pause,ts}]`、`f:[{d,m,n,k,p,c,f,cr,ts}]`、`bw:[{d,kg,note,ts}]`。
+数据形状：`w:[{d,ex,sets:[{w,r}],dur,st,et,pause,ts}]`、`f:[{d,m,n,k,p,c,f,cr,pw,ts}]`、`bw:[{d,kg,note,ts}]`。
 `st/et/pause` 是动作级计时的秒级毫秒时间戳与暂停累计，`dur` 由当天所有动作的 `et−st−pause` 求和派生（前端没有单独录入入口）。
 `cr` 是补剂条目的肌酸克数（缺省/老数据按 0，不参与热量与宏量加总，见「肌酸快捷记录」）。
+`pw` 是补剂条目的蛋白粉克数（缺省/老数据按 0，**不参与加总**，只用于留痕；蛋白粉的热量/宏量照常写在 `k/p/c/f`，见「蛋白粉快捷记录」）。
 服务端限制：单类最多 2000 条、每个动作最多 20 组、请求体 ≤ 2MB、日期必须 `YYYY-MM-DD`。
 
 前端写入语义：改本地立即生效并置 `ft_dirty_<user>`，800ms 防抖后整体 POST `/api/import`，**只有推送成功才清脏标记**；
@@ -91,6 +92,20 @@ bash deploy/build-web.sh             # 构建并发布到 nginx 静态目录（�
 
 后端配套：`ft_foods.creatine`（FLOAT，默认 0，`migrate_schema()` 幂等 `ADD COLUMN IF NOT EXISTS` 自动补列），`/api/export` 输出 `cr`、`/api/import` 读取 `cr`。
 **少了这一步，整包覆盖写回时 `cr` 会被服务端丢掉** —— 前端加字段必须同时改后端并重建镜像。
+
+## 蛋白粉快捷记录
+
+饮食页与首页「快捷记录」各有一个蛋白粉入口，按标签折算宏量后落一条 `补剂` 餐次记录（`n:'乳清蛋白粉20g'`、`pw:20`、`cr:0`）：
+
+- 标签值在 `constants/foods.ts` 的 `WHEY.per100g`（默认 390kcal/80p/8c/5f 每 100g），**换产品只改这一处**；宏量 = `克数/100 × 标签值`，保留一位小数（`domain/powder.ts`）。
+- 饮食页（`FoodView`）：剂量输入框（5–100g，默认 20g）+「记录蛋白粉」，实时显示折算结果与当日已记克数，可先改日期再记。
+- 首页（`TodayView`）：点一下即记默认 20g，按钮上带出「蛋白 +16g」与今日已记克数。
+- **与肌酸的关键区别：蛋白粉的 `k/p/c/f` 照常进 `daySum`**（要算进蛋白 150g / 热量 3000kcal 目标），`pw` 只走独立的 `powderSum(db, d)` 留痕，**不进 `daySum`** —— 否则同一份粉会被计两次。今日概览的 KPI 里显示「蛋白粉 Xg · 已计入蛋白」。
+- 不走 `saveFood` 的多项校验路径，但仍以普通 `f` 记录落库，可单独删除。
+
+后端配套：`ft_foods.protein_powder`（FLOAT，默认 0，`migrate_schema()` 幂等补列），`/api/export` 输出 `pw`、`/api/import` 读取 `pw`。同样**必须与前端同时上线**，否则整包覆盖写回时 `pw` 会被服务端丢掉（宏量 `k/p/c/f` 不受影响）。
+
+预设 chip 语义（`FoodView.pick()`）：复合餐预设仍是整表预填（v1.5 语义）；**单条目预设改为追加**，并且在追加前只清掉完全空白的草稿行 —— 否则想在已填好的一餐里多加一勺粉会被整表替换冲掉。
 
 ## 已知限制
 

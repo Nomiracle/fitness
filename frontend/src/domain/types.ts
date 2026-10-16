@@ -37,6 +37,8 @@ export interface FoodRec {
   f: number
   /** 肌酸克数（补剂条目用；老数据没有该字段，一律按 0 处理） */
   cr?: number
+  /** 蛋白粉克数（补剂条目用；老数据没有该字段，一律按 0 处理）。宏量仍在 k/p/c/f 里，pw 只用于单独留痕 */
+  pw?: number
   ts: number
 }
 
