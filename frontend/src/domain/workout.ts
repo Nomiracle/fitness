@@ -107,7 +107,16 @@ export function elapsedMs(at: TimerState, now: number): number {
 export function toggleTimer(at: TimerState, now: number): TimerState {
   if (at.state === 'running') return { ...at, pauseAt: now, state: 'paused' }
   if (at.state === 'paused') return { ...at, pauseMs: at.pauseMs + (now - at.pauseAt), pauseAt: 0, state: 'running' }
-  return { ...idleTimer(), state: 'running', st: now }
+  return startTimer(now)
+}
+
+/**
+ * 直接起一段新计时（「保存并下一个动作」自动开始走这里）。
+ * 语义与手动 toggle 的 idle→running 完全相同，只差没有按钮防抖 —— 保存那一刻上一个动作的
+ * 计时已经 clear，不存在与点击竞争的状态。返回新状态，不改入参。
+ */
+export function startTimer(now: number): TimerState {
+  return { state: 'running', st: now, pauseMs: 0, pauseAt: 0 }
 }
 
 /** 保存时本动作的暂停累计值 */

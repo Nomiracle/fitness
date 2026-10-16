@@ -5,9 +5,10 @@ import { CREATINE, MEALS, WHEY, type FoodPreset } from '@/constants/foods'
 import { useDataStore } from '@/stores/data'
 import { toast } from '@/stores/ui'
 import { fmtT, today } from '@/domain/time'
-import type { FitnessDB } from '@/domain/types'
+import type { FitnessDB, FoodRec } from '@/domain/types'
 import { toFoodRecs, type FoodDraft } from '@/domain/foodDraft'
 import { powderMacros, powderRec, powderSum } from '@/domain/powder'
+import { FOOD_HISTORY_DAYS, foodDays, foodIndexMap, type FoodDayGroup } from '@/domain/foodDays'
 import { downloadJson, readJsonFile } from '@/utils/download'
 import FoodPresetChips from '@/components/FoodPresetChips.vue'
 
@@ -26,7 +27,17 @@ const powderG = ref<number>(WHEY.defaultG)
 const powderPreview = computed(() => powderMacros(powderG.value))
 const powderToday = computed(() => powderSum(data.db, date.value || today()))
 
-const history = computed(() => data.db.f.slice(0, 20))
+/** 饮食历史：按日期分组（默认最近 7 天，可展开更多） */
+const daysShown = ref(FOOD_HISTORY_DAYS)
+const history = computed(() => foodDays(data.db, daysShown.value))
+/** 记录 → db.f 原下标：分组后的下标与 db.f 不同，删除必须走这张表 */
+const foodPos = computed(() => foodIndexMap(data.db.f))
+
+/** 每日小计文案（一位小数，整数不显示 .0） */
+function macroText(g: FoodDayGroup): string {
+  const n1 = (v: number): number | string => +v.toFixed(1)
+  return `${Math.round(g.day.k)}kcal · 蛋 ${n1(g.day.p)}g · 碳 ${n1(g.day.c)}g · 脂 ${n1(g.day.f)}g`
+}
 const mealTotals = computed(() => items.value.reduce((sum, x) => ({
   k: sum.k + (Number(x.k) || 0),
   p: sum.p + (Number(x.p) || 0),
@@ -106,8 +117,10 @@ function saveFood(): void {
   toast(`已保存 ${records.length} 项饮食 ✅`)
 }
 
-function removeFood(index: number): void {
-  data.removeFood(index)
+function removeFood(x: FoodRec): void {
+  const i = foodPos.value.get(x)
+  if (i == null) return
+  data.removeFood(i)
   toast('已删除该条饮食')
 }
 
@@ -228,17 +241,36 @@ async function onFile(e: Event): Promise<void> {
   </div>
 
   <div class="card">
-    <h3>📜 <em>饮食历史</em></h3>
-    <p v-if="!history.length" class="mut">暂无记录</p>
-    <div v-for="(x, i) in history" :key="`${x.d}-${x.ts}-${x.n}`" class="log">
-      <span class="log-actions">
-        <button class="link-btn" @click="removeFood(i)">删除</button>
-      </span>
-      <b>{{ x.d }}{{ fmtT(x.ts) }} {{ x.m }}</b> {{ x.n }}
-      <br />
-      <span v-if="x.cr" class="mut">💪 肌酸 {{ x.cr }}g · 不计热量</span>
-      <span v-else class="mut"><template v-if="x.pw">🥛 蛋白粉 {{ x.pw }}g（已计入蛋白）· </template>{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
-    </div>
+    <h3>📜 <em>饮食历史</em> <span class="mut">{{ history.total }} 天</span></h3>
+    <p v-if="!history.total" class="mut">暂无记录</p>
+
+    <template v-for="g in history.groups" :key="g.d">
+      <div class="log" style="border-left-color: var(--acc)">
+        <b>{{ g.d }}</b>
+        <span class="mut">
+          {{ g.items.length }} 条 · {{ macroText(g) }}<template v-if="g.cr"> · 💪 肌酸 {{ +g.cr.toFixed(1) }}g</template><template v-if="g.pw"> · 🥛 蛋白粉 {{ +g.pw.toFixed(1) }}g</template>
+        </span>
+      </div>
+
+      <div v-for="x in g.items" :key="`${x.d}-${x.ts}-${x.n}`" class="log" style="margin-left: 10px">
+        <span class="log-actions">
+          <button class="link-btn" @click="removeFood(x)">删除</button>
+        </span>
+        <b>{{ fmtT(x.ts) }} {{ x.m }}</b> {{ x.n }}
+        <br />
+        <span v-if="x.cr" class="mut">💪 肌酸 {{ x.cr }}g · 不计热量</span>
+        <span v-else class="mut"><template v-if="x.pw">🥛 蛋白粉 {{ x.pw }}g（已计入蛋白）· </template>{{ x.k }}kcal · 蛋{{ x.p }}g 碳{{ x.c }}g 脂{{ x.f }}g</span>
+      </div>
+    </template>
+
+    <el-button
+      v-if="history.total > history.groups.length"
+      size="small"
+      style="width: 100%; margin-top: 8px"
+      @click="daysShown += FOOD_HISTORY_DAYS"
+    >
+      显示更早的记录（还有 {{ history.total - history.groups.length }} 天）
+    </el-button>
 
     <div class="row" style="margin-top: 8px">
       <el-button class="grow" size="small" @click="exportData">导出备份</el-button>

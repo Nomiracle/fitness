@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { elapsedMs, idleTimer, pauseAtSave, toggleTimer, type TimerState } from '@/domain/workout'
+import { elapsedMs, idleTimer, pauseAtSave, startTimer, toggleTimer, type TimerState } from '@/domain/workout'
 import { today } from '@/domain/time'
 import { keyTimer, safeGet, safeSet } from '@/utils/storage'
 
@@ -20,6 +20,8 @@ export const useTimerStore = defineStore('timer', () => {
   /** 每 tick 更新，驱动「本动作 mm:ss」显示 */
   const now = ref<number>(Date.now())
   const user = ref<string>('')
+  /** 当前这段计时是否由「保存并下一个动作」自动开始（只用于文案提示，不持久化） */
+  const autoStarted = ref(false)
   let tick: ReturnType<typeof setInterval> | null = null
   let lock = 0
 
@@ -55,6 +57,7 @@ export const useTimerStore = defineStore('timer', () => {
 
   function clear(): void {
     at.value = idleTimer()
+    autoStarted.value = false
     persist()
     now.value = Date.now()
   }
@@ -65,6 +68,20 @@ export const useTimerStore = defineStore('timer', () => {
     if (t - lock < TOGGLE_LOCK_MS) return
     lock = t
     at.value = toggleTimer(at.value, t)
+    autoStarted.value = false
+    now.value = t
+    persist()
+  }
+
+  /**
+   * 自动开始计时：「保存并下一个动作」在切到下一个动作后调用。
+   * 不加防抖锁 —— 保存时上一段计时已 clear（idle），没有与点击竞争的状态；
+   * 用户紧接着点「暂停」应立刻生效。
+   */
+  function start(): void {
+    const t = Date.now()
+    at.value = startTimer(t)
+    autoStarted.value = true
     now.value = t
     persist()
   }
@@ -95,7 +112,23 @@ export const useTimerStore = defineStore('timer', () => {
     stopTick()
     at.value = idleTimer()
     user.value = ''
+    autoStarted.value = false
   }
 
-  return { at, now, user, bind, load, clear, toggle, elapsed, pauseTotalAtSave, startTick, stopTick, reset }
+  return {
+    at,
+    now,
+    user,
+    autoStarted,
+    bind,
+    load,
+    clear,
+    toggle,
+    start,
+    elapsed,
+    pauseTotalAtSave,
+    startTick,
+    stopTick,
+    reset,
+  }
 })

@@ -76,8 +76,9 @@ const timerMain = computed(() => {
 })
 
 const timerSub = computed(() => {
-  let hint = '点「开始本动作」记录开始时间；不点也能保存，只是这条没有时长'
-  if (timer.at.state === 'running') hint = '计时中 · 点保存即结束本动作'
+  let hint = '点「开始本动作」记录开始时间；点「保存并下一个动作」会自动为下一个动作开始计时'
+  if (timer.at.state === 'running')
+    hint = '计时中 · 点保存即结束本动作' + (timer.autoStarted ? '（自动开始，含休息/换器材）' : '')
   else if (timer.at.state === 'paused')
     hint = '已暂停 ' + hm(timer.at.pauseMs + (timer.now - timer.at.pauseAt)) + ' · 点继续接着计时'
 
@@ -186,7 +187,13 @@ function saveWorkout(advance: boolean): void {
     (total ? ` · 今日合计 ${total} 分钟` : '')
   if (over) msg += ` · 已按 ${MAX_ACTION_MIN} 分钟上限计入，可在下方历史里修正`
   if (advance) {
-    msg += gotoNextEx() ? ` · 下一个：${current.value.n}` : ` · 今日 ${exercises.length} 个动作已记完 ✅`
+    if (gotoNextEx()) {
+      // 切到下一个动作后立刻起计时：省掉一次「开始本动作」点击，否则新动作很容易整段没有时长
+      timer.start()
+      msg += ` · 下一个：${current.value.n} · ⏱ 已自动开始计时`
+    } else {
+      msg += ` · 今日 ${exercises.length} 个动作已记完 ✅`
+    }
   }
 
   toast(msg, {

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { MAX_ACTION_MIN, tsFromTime, validateTimeEdit } from './time'
 import { barWidth, isOver } from './nutrition'
-import { elapsedMs, toggleTimer, type TimerState } from './workout'
+import { elapsedMs, pauseAtSave, startTimer, toggleTimer, type TimerState } from './workout'
 
 describe('历史行内改时间的校验规则', () => {
   const d = '2026-09-28'
@@ -79,5 +79,35 @@ describe('计时状态机（v1.5 atBtn 的纯函数版）', () => {
     const at: TimerState = { state: 'running', st: T0, pauseMs: 0, pauseAt: 0 }
     toggleTimer(at, T0 + 1000)
     expect(at).toEqual({ state: 'running', st: T0, pauseMs: 0, pauseAt: 0 })
+  })
+})
+
+describe('「保存并下一个动作」的自动计时（startTimer）', () => {
+  const T0 = 1_790_000_000_000
+
+  it('直接进入 running：起点=调用时刻、无暂停累计', () => {
+    expect(startTimer(T0)).toEqual({ state: 'running', st: T0, pauseMs: 0, pauseAt: 0 })
+  })
+
+  it('刚自动开始时已用时长归零，不继承上一段动作的时间', () => {
+    expect(elapsedMs(startTimer(T0), T0)).toBe(0)
+    expect(elapsedMs(startTimer(T0), T0 + 90_000)).toBe(90_000)
+  })
+
+  it('自动开始后保存：st 就是起点、pause 为 0', () => {
+    const at = startTimer(T0)
+    expect(at.state).toBe('running')
+    expect(at.st).toBe(T0)
+    expect(pauseAtSave(at, T0 + 600_000)).toBe(0)
+  })
+
+  it('与手动 toggle 的 idle→running 完全等价', () => {
+    expect(startTimer(T0)).toEqual(toggleTimer({ state: 'idle', st: 0, pauseMs: 0, pauseAt: 0 }, T0))
+  })
+
+  it('不改入参（纯函数）', () => {
+    const prev: TimerState = { state: 'paused', st: T0 - 1_000, pauseMs: 5_000, pauseAt: T0 - 500 }
+    startTimer(T0)
+    expect(prev).toEqual({ state: 'paused', st: T0 - 1_000, pauseMs: 5_000, pauseAt: T0 - 500 })
   })
 })
